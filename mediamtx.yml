@@ -1,0 +1,151 @@
+# MediaMTX Configuration
+# Documentation: https://github.com/bluenviron/mediamtx
+
+# General settings
+logLevel: info
+logDestinations: [stdout]
+logFile: /logs/mediamtx.log
+
+# API server for metrics and control
+api: yes
+apiAddress: :9997
+
+# Metrics
+metrics: yes
+metricsAddress: :9998
+
+# Authentication configuration
+# Allow internal Docker network and private IPs to publish and read
+# Allow anyone to read/playback from any IP
+authInternalUsers:
+  - user: any
+    pass:
+    ips: ['127.0.0.1', '::1', '172.0.0.0/8', '10.0.0.0/8', '192.168.0.0/16']
+    permissions:
+    - action: api
+    - action: metrics
+    - action: pprof
+    - action: publish
+    - action: read
+  # Allow playback from any IP without authentication
+  - user: any
+    pass:
+    ips: []
+    permissions:
+    - action: playback
+    - action: read
+
+# RTSP server
+rtsp: yes
+rtspAddress: :8554
+rtspTransports: [tcp, udp]
+# Uncomment for RTSP over TLS/SSL
+# rtspEncryption: optional
+# rtspServerKey: /path/to/server.key
+# rtspServerCert: /path/to/server.crt
+
+# RTMP server
+rtmp: yes
+rtmpAddress: :1935
+# Uncomment for RTMPS (RTMP over TLS)
+# rtmpEncryption: optional
+# rtmpServerKey: /path/to/server.key
+# rtmpServerCert: /path/to/server.crt
+
+# HLS server
+hls: yes
+hlsAddress: :8888
+hlsVariant: lowLatency
+hlsSegmentCount: 7
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+hlsSegmentMaxSize: 50M
+hlsDirectory: /hls
+# Uncomment for HLS encryption
+# hlsEncryption: yes
+# hlsServerKey: /path/to/server.key
+# hlsServerCert: /path/to/server.crt
+
+# WebRTC server
+webrtc: yes
+webrtcAddress: :8889
+webrtcLocalUDPAddress: :8189
+# IMPORTANT: Replace YOUR_SERVER_IP with your server's public IP or hostname
+# This is required for WebRTC to work properly
+webrtcAdditionalHosts: [YOUR_SERVER_IP]
+# Example: webrtcAdditionalHosts: [192.168.1.100, myserver.example.com]
+
+# WebRTC ICE servers for NAT traversal
+webrtcICEServers2:
+  - url: stun:stun.l.google.com:19302
+  - url: stun:stun1.l.google.com:19302
+# Add TURN server if needed for strict NAT:
+# - url: turn:turn.example.com:3478
+#   username: user
+#   password: pass
+
+# SRT server
+srt: yes
+srtAddress: :8890
+
+# Paths (stream configurations)
+paths:
+  # Default path for all streams
+  all_others:
+    record: no
+    # Uncomment to enable recording for all streams by default
+    # record: yes
+    # recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+
+  # Example: Live stream with recording
+  # live:
+  #   source: publisher
+  #   record: yes
+  #   recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+
+  # Example: Test stream without recording
+  # test:
+  #   source: publisher
+  #   record: no
+
+  # Example: RTSP source proxy (pull from another RTSP source)
+  # proxy_camera:
+  #   source: rtsp://admin:password@192.168.1.100:554/stream
+  #   sourceProtocol: rtsp
+  #   sourceOnDemand: yes
+  #   record: yes
+  #   recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+
+  # Example: SRT source
+  # srt_source:
+  #   source: srt://upstream-server:8890
+  #   sourceProtocol: srt
+  #   record: no
+
+  # Example: Password-protected stream
+  # secure_stream:
+  #   source: publisher
+  #   publishUser: username
+  #   publishPass: password
+  #   readUser: username
+  #   readPass: password
+  #   record: no
+
+# Path defaults (applied to all paths unless overridden)
+pathDefaults:
+  # Source is publisher - FFmpeg will push streams to MediaMTX
+  source: publisher
+
+  # Recording settings
+  record: no
+  recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+  recordFormat: fmp4
+  recordPartDuration: 1h
+  recordSegmentDuration: 1h
+  recordDeleteAfter: 0s  # 0 = never delete, set to duration like "720h" for 30 days
+
+  # Run on events (execute commands on stream events)
+  # Uncomment to enable webhook notifications
+  # runOnReady: curl -X POST http://webhook.example.com/stream-ready -d "path=%path"
+  # runOnRead: curl -X POST http://webhook.example.com/stream-viewed -d "path=%path"
+  # runOnUnready: curl -X POST http://webhook.example.com/stream-ended -d "path=%path"

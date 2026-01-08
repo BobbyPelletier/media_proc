@@ -1,0 +1,44 @@
+MediaMTX Stream Manager - Distribution Structure
+=================================================
+
+media_proc_distribution/
+│
+├── 📄 START_HERE.txt              ⭐ Read this first!
+├── 📄 DISTRIBUTION_README.md      Quick deployment guide
+├── 📄 README.md                   Complete user manual
+├── 📄 CHANGELOG.md                Version history
+│
+├── ⚙️  docker-compose.yml          Container orchestration (CONFIGURE THIS)
+├── ⚙️  mediamtx.yml                MediaMTX config (CONFIGURE THIS)
+├── 📄 .env.example                Environment template
+├── 📄 .gitignore                  Git ignore rules
+├── 🔧 setup.sh                    Deployment script
+│
+├── 📁 web/                        Flask Application
+│   ├── app.py                     Backend API (23KB)
+│   ├── Dockerfile                 Container build
+│   ├── requirements.txt           Python dependencies
+│   ├── templates/
+│   │   └── index.html             Web UI
+│   └── static/
+│       ├── css/
+│       │   └── style.css          Styles + dark mode
+│       └── js/
+│           └── app.js             Frontend logic
+│
+└── 📁 docs/                       Documentation
+    ├── FEATURES.md                Feature details
+    ├── TROUBLESHOOTING.md         Common issues
+    ├── ARCHITECTURE.md            Technical details
+    ├── QUICK_START.md             Fast setup
+    ├── DISTRIBUTION_NOTES.md      Sanitization info
+    ├── VERIFICATION_CHECKLIST.md  Quality checks
+    ├── DEPLOYMENT_SUMMARY.md      Deploy info
+    └── MANIFEST.md                File listing
+
+Quick Start:
+1. Read START_HERE.txt
+2. Edit docker-compose.yml (set SERVER_IP)
+3. Edit mediamtx.yml (set webrtcAdditionalHosts)
+4. Run: docker-compose up -d
+5. Access: http://YOUR_SERVER_IP:5000

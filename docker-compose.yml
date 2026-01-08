@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    restart: unless-stopped
+    ports:
+      # RTSP
+      - "8554:8554"
+      # RTMP
+      - "1935:1935"
+      # HLS
+      - "8888:8888"
+      # WebRTC HTTP
+      - "8889:8889"
+      # WebRTC UDP
+      - "8189:8189/udp"
+      # SRT
+      - "8890:8890/udp"
+      # API (internal only - optional to expose)
+      # - "9997:9997"
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml
+      - ${RECORDINGS_PATH:-./recordings}:/recordings
+      - ${LOGS_PATH:-./logs}:/logs
+      - ./hls:/hls
+    environment:
+      - MTX_PROTOCOLS=tcp
+      - MTX_LOGLEVEL=info
+    networks:
+      - media_network
+
+  stream_manager:
+    image: bpelleti/mediamtx-stream-manager:latest
+    # To build locally instead, comment the line above and uncomment:
+    # build: ./web
+    container_name: stream_manager
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-5000}:5000"
+    volumes:
+      - ./web:/app
+      - ./streams:/streams
+      - ${MEDIA_PATH:-./media}:/media
+      - ${RECORDINGS_PATH:-./recordings}:/recordings
+    environment:
+      - MEDIAMTX_HOST=mediamtx
+      - SERVER_IP=${SERVER_IP:-YOUR_SERVER_IP}
+      - RTSP_PORT=8554
+      - SRT_PORT=8890
+      - RTMP_PORT=1935
+      - HLS_PORT=8888
+      - WEBRTC_PORT=8889
+    networks:
+      - media_network
+      # Uncomment the line below if using Traefik reverse proxy
+      # - proxy
+    depends_on:
+      - mediamtx
+    # Traefik labels - Uncomment and configure if using Traefik reverse proxy
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.stream-manager.rule=Host(`your-domain.com`)"
+    #   - "traefik.http.routers.stream-manager.entrypoints=websecure"
+    #   - "traefik.http.routers.stream-manager.tls=true"
+    #   - "traefik.http.routers.stream-manager-http.rule=Host(`your-domain.com`)"
+    #   - "traefik.http.routers.stream-manager-http.entrypoints=web"
+    #   - "traefik.http.routers.stream-manager-http.middlewares=redirect-to-https@file"
+    #   - "traefik.http.routers.stream-manager-http.service=noop@internal"
+    #   - "traefik.http.services.stream-manager.loadbalancer.server.port=5000"
+    #   - "traefik.docker.network=proxy"
+    # Optional: Uncomment for hardware acceleration support
+    # For NVIDIA GPUs (requires nvidia-docker2):
+    # runtime: nvidia
+    # environment:
+    #   - NVIDIA_VISIBLE_DEVICES=all
+    #   - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+    # For Intel QuickSync / VA-API:
+    # devices:
+    #   - /dev/dri:/dev/dri
+
+networks:
+  media_network:
+    driver: bridge
+  # Uncomment if using Traefik reverse proxy
+  # proxy:
+  #   external: true
+
+volumes:
+  recordings:
+  hls:

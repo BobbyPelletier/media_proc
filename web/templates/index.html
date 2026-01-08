@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaMTX Stream Manager</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=8">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📡 MediaMTX Stream Manager</h1>
+            <p class="subtitle">Manage multiple video streams with ease</p>
+            <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle dark mode">🌙</button>
+        </header>
+
+        <div class="controls">
+            <button id="addStreamBtn" class="btn btn-primary">
+                <span class="icon">+</span> Add New Stream
+            </button>
+            <button id="stopAllBtn" class="btn btn-danger">
+                <span class="icon">⏹</span> Stop All Streams
+            </button>
+            <button id="stopSelectedBtn" class="btn btn-danger" style="display: none;">
+                <span class="icon">⏹</span> Stop Selected
+            </button>
+            <button id="refreshBtn" class="btn btn-secondary">
+                <span class="icon">🔄</span> Refresh
+            </button>
+            <button id="recordingsBtn" class="btn btn-secondary">
+                <span class="icon">📹</span> Recordings
+            </button>
+        </div>
+
+        <div id="streamsContainer" class="streams-container">
+            <!-- Stream blocks will be added here dynamically -->
+        </div>
+
+        <div id="noStreams" class="no-streams">
+            <p>No active streams. Click "Add New Stream" to get started!</p>
+        </div>
+    </div>
+
+    <!-- Stream Configuration Modal -->
+    <div id="streamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Configure Stream</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="streamForm">
+                    <div class="form-group">
+                        <label for="streamName">Stream Name *</label>
+                        <input type="text" id="streamName" name="streamName" required
+                               placeholder="e.g., live, test, stream1">
+                        <small>This will be used in the stream URL</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Video Source *</label>
+                        <div class="source-options">
+                            <label class="radio-option">
+                                <input type="radio" name="sourceType" value="existing" checked>
+                                <span>Select from Server</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="sourceType" value="upload">
+                                <span>Upload File</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="sourceType" value="camera">
+                                <span>IP Camera</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="existingFileSection" class="form-group">
+                        <label for="existingFile">Select Video File</label>
+                        <div class="file-select-container">
+                            <select id="existingFile" name="existingFile">
+                                <option value="">Loading...</option>
+                            </select>
+                            <button type="button" id="browseFilesBtn" class="btn btn-secondary">
+                                <span class="icon">📁</span> Browse Server
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="uploadFileSection" class="form-group" style="display: none;">
+                        <label for="uploadFile">Upload Video File</label>
+                        <input type="file" id="uploadFile" name="uploadFile"
+                               accept=".mp4,.mkv,.avi,.mov,.flv,.ts,.webm">
+                        <div id="uploadProgress" class="upload-progress" style="display: none;">
+                            <div class="progress-bar">
+                                <div id="progressBarFill" class="progress-bar-fill"></div>
+                            </div>
+                            <span id="uploadStatus">Uploading...</span>
+                        </div>
+                    </div>
+
+                    <div id="cameraSection" class="form-group" style="display: none;">
+                        <label for="cameraUrl">Camera RTSP URL *</label>
+                        <input type="text" id="cameraUrl" name="cameraUrl"
+                               placeholder="rtsp://username:password@192.168.1.100:554/stream">
+                        <small>Example: rtsp://admin:password@192.168.1.100:554/Streaming/Channels/101</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bitrate">Bitrate</label>
+                            <select id="bitrate" name="bitrate">
+                                <option value="1M">1 Mbps</option>
+                                <option value="2M" selected>2 Mbps</option>
+                                <option value="3M">3 Mbps</option>
+                                <option value="4M">4 Mbps</option>
+                                <option value="5M">5 Mbps</option>
+                                <option value="8M">8 Mbps</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="resolution">Resolution</label>
+                            <select id="resolution" name="resolution">
+                                <option value="">Original</option>
+                                <option value="1920:1080">1080p (1920x1080)</option>
+                                <option value="1280:720">720p (1280x720)</option>
+                                <option value="854:480">480p (854x480)</option>
+                                <option value="640:360">360p (640x360)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options Toggle -->
+                    <div class="advanced-options-toggle" id="advancedToggle">
+                        <span>⚙️ Advanced Options</span>
+                        <span class="icon">▼</span>
+                    </div>
+                    <div class="advanced-options-content" id="advancedContent">
+                        <div class="form-group">
+                            <label for="protocol">Publishing Protocol</label>
+                            <select id="protocol" name="protocol" required>
+                                <option value="rtsp" selected>RTSP (Recommended)</option>
+                                <option value="srt">SRT</option>
+                                <option value="rtmp">RTMP</option>
+                            </select>
+                            <small>How FFmpeg publishes to MediaMTX. All output formats (RTSP, RTMP, SRT, HLS, WebRTC) are always available.</small>
+                            <div id="protocolRecommendation" class="protocol-recommendation" style="margin-top: 0.75rem;">
+                                <strong>💡 Best for:</strong> <span id="protocolUseCase">General streaming with low latency</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="audioCodec">Audio Codec</label>
+                            <select id="audioCodec" name="audioCodec">
+                                <option value="opus" selected>Opus (Recommended)</option>
+                                <option value="aac">AAC</option>
+                            </select>
+                            <small><strong>Opus:</strong> Required for WebRTC, excellent quality. <strong>AAC:</strong> Better RTSP/RTMP compatibility.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="hwAccel">Hardware Acceleration</label>
+                            <select id="hwAccel" name="hwAccel">
+                                <option value="">None (Software)</option>
+                                <option value="nvenc">NVIDIA NVENC</option>
+                                <option value="qsv">Intel QuickSync</option>
+                                <option value="vaapi">VA-API (AMD/Intel)</option>
+                            </select>
+                            <small>GPU encoding for better performance. Requires compatible hardware.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="enableRecording" name="enableRecording">
+                            Enable Recording
+                        </label>
+                        <small>Save stream to disk in the recordings directory</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="enableAuth" name="enableAuth">
+                            Enable Stream Authentication
+                        </label>
+                        <small>Protect your stream with username and password</small>
+                    </div>
+
+                    <div id="authSection" class="form-row" style="display: none;">
+                        <div class="form-group">
+                            <label for="authUser">Username</label>
+                            <input type="text" id="authUser" name="authUser" placeholder="username">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="authPass">Password</label>
+                            <input type="password" id="authPass" name="authPass" placeholder="password">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Start Stream</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Browser Modal -->
+    <div id="fileBrowserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Browse Server Files</h2>
+                <span class="close-browser">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="file-browser">
+                    <div class="breadcrumb" id="breadcrumb">
+                        <span class="breadcrumb-item" data-path="/">Root</span>
+                    </div>
+                    <div class="file-list" id="fileList">
+                        <div class="loading">Loading...</div>
+                    </div>
+                    <div class="browser-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelBrowserBtn">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="selectFileBtn" disabled>Select File</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recordings Modal -->
+    <div id="recordingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Recordings</h2>
+                <span class="close-recordings">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="recordingsList" class="recordings-list">
+                    <div class="loading">Loading recordings...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js?v=8"></script>
+</body>
+</html>

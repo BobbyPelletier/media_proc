@@ -7,7 +7,6 @@ This is a ready-to-deploy distribution of the MediaMTX Stream Manager. This pack
 **Option 1: Docker Hub Image (Recommended)**
 - Pull pre-built image from Docker Hub
 - Faster deployment, no build required
-- See `docs/DOCKER_HUB_GUIDE.md` for publishing instructions
 
 **Option 2: Build Locally**
 - Build the stream_manager image from source
@@ -33,7 +32,7 @@ Before deploying, you must configure the following:
 If using a Docker Hub image, edit `docker-compose.yml` and replace the image reference:
 ```yaml
 stream_manager:
-  image: YOUR_DOCKERHUB_USERNAME/mediamtx-stream-manager:latest
+  image: bpelleti/mediamtx-stream-manager:latest
 ```
 
 **To build locally instead**, comment out the `image:` line and uncomment `build: ./web`

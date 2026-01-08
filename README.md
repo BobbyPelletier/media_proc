@@ -29,6 +29,7 @@ The stream manager uses FFmpeg to encode video sources and publish to MediaMTX, 
 ## Prerequisites
 
 - Docker and Docker Compose
+- ffmpeg
 - Linux host (tested on Ubuntu/Debian)
 - Hardware encoding (optional but recommended):
   - NVIDIA GPU with NVENC support
